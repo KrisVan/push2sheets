@@ -1,0 +1,38 @@
+name: Deploy
+
+on:
+  workflow_call:
+    secrets:
+      SSH_HOST:
+        required: true
+      SSH_USER:
+        required: true
+      SSH_PRIVATE_KEY:
+        required: true
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    container:
+      image: python:3.11-slim
+
+    steps:
+      - name: Deploy to production via SSH
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            set -e
+            cd /home/opc/projects/push2sheets
+            echo "Pulling latest code..."
+            git fetch --all
+            git reset --hard origin/main
+            echo "Pulling latest Docker images..."
+            docker compose -f docker-compose.yml pull --quiet-pull
+            echo "Rebuilding and restarting containers..."
+            docker compose -f docker-compose.yml up -d --build --remove-orphans
+            echo "Deployment complete!"

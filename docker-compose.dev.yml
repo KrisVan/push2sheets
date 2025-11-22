@@ -1,0 +1,17 @@
+# docker compose -f docker-compose.dev.yml up --build
+
+version: "3.9"
+
+services:
+  webhook:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: expense-sync-dev
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./src:/app  # live reload
+      - ./creds.json:/app/creds.json:ro
+    environment:
+      - FLASK_ENV=development
